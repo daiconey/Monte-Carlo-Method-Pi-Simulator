@@ -30,21 +30,22 @@
             <p class="text-slate-600">正方形の中にランダムに点を打ち、円の中に入る確率から円周率（π）を推定します。</p>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Top Section: Simulation and Controls -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- Simulation Visual -->
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-xl font-semibold mb-4 flex items-center">
                     <span class="w-3 h-3 bg-indigo-500 rounded-full mr-2"></span> シミュレーション
                 </h2>
-                <div class="relative aspect-square w-full bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                <div class="relative aspect-square w-full max-w-[400px] mx-auto bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                     <canvas id="simCanvas" class="w-full h-full"></canvas>
                 </div>
                 <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
-                    <div class="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                    <div class="p-3 bg-indigo-50 rounded-lg border border-indigo-100 text-center">
                         <p class="text-indigo-600 font-bold">円の内部</p>
                         <p id="insideCount" class="text-2xl font-mono text-indigo-700">0</p>
                     </div>
-                    <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-center">
                         <p class="text-slate-500 font-bold">合計試行数</p>
                         <p id="totalCount" class="text-2xl font-mono text-slate-700">0</p>
                     </div>
@@ -52,7 +53,7 @@
             </div>
 
             <!-- Controls & Results -->
-            <div class="lg:col-span-1 space-y-6">
+            <div class="space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <h2 class="text-xl font-semibold mb-4">コントロール</h2>
                     <div class="space-y-4">
@@ -97,19 +98,31 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Chart -->
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h2 class="text-xl font-semibold mb-4">収束グラフ</h2>
-                <div class="h-64">
-                    <canvas id="historyChart"></canvas>
-                </div>
-                <div class="mt-6 text-sm text-slate-600 leading-relaxed">
+        <!-- Middle Section: Wide Chart -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">収束グラフ（推移）</h2>
+                <div class="text-xs text-slate-400">※初期の不安定な動きから徐々に3.141...へ近づきます</div>
+            </div>
+            <div class="h-80 w-full">
+                <canvas id="historyChart"></canvas>
+            </div>
+            <div class="mt-6 text-sm text-slate-600 leading-relaxed grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
                     <p class="font-bold text-indigo-600 mb-1">なぜこれで求まるの？</p>
                     <p>
-                        一辺 <i>r</i> の正方形の面積は <i>r</i><sup>2</sup>。その中の扇形（半径 <i>r</i>、中心角 90°）の面積は 1/4 × π<i>r</i><sup>2</sup> です。<br>
-                        ランダムに点を打ったとき、扇形の中に入る確率は面積比と同じ π/4 になります。<br>
+                        一辺 <i>r</i> の正方形の面積は <i>r</i><sup>2</sup>。その中の扇形（半径 <i>r</i>、中心角 90°）の面積は 1/4 × π<i>r</i><sup>2</sup> です。
+                        ランダムに点を打ったとき、扇形の中に入る確率は面積比と同じ π/4 になります。
                         よって、<b>4 × (中に入った数 ÷ 全体の数)</b> で π が計算できます。
+                    </p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <p class="font-bold text-slate-700 mb-1">グラフの見方</p>
+                    <p>
+                        青い線が現在の推定値、赤い点線が真の円周率です。
+                        試行回数が少ないときは、1つの点が結果に大きく影響するため激しく上下しますが、回数が増えるにつれて真の値に吸い寄せられるように安定（収束）していきます。
                     </p>
                 </div>
             </div>
@@ -171,7 +184,6 @@ if __name__ == '__main__':
                     コピーしました！
                 </div>
             </div>
-            <p class="mt-4 text-sm text-slate-500 italic">※このコードをコピーして Python 環境で実行すると、同様のシミュレーション結果が得られます。</p>
         </div>
     </div>
 
@@ -186,8 +198,12 @@ if __name__ == '__main__':
         let inside = 0;
         let isRunning = false;
         let animationId = null;
-        let historyData = [];
-        let labels = [];
+        
+        // Data arrays for Chart.js
+        const historyData = [];
+        const labels = [];
+        const piLineData = [];
+
         const size = 500;
         canvas.width = size;
         canvas.height = size;
@@ -221,7 +237,7 @@ if __name__ == '__main__':
                     tension: 0.1
                 }, {
                     label: 'π (3.14159)',
-                    data: [],
+                    data: piLineData,
                     borderColor: '#f43f5e',
                     borderWidth: 1,
                     borderDash: [5, 5],
@@ -232,7 +248,17 @@ if __name__ == '__main__':
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: { y: { min: 2.5, max: 3.8 }, x: { display: false } },
+                scales: { 
+                    y: { 
+                        min: 2.5, 
+                        max: 3.8,
+                        ticks: { stepSize: 0.1 }
+                    }, 
+                    x: { 
+                        display: true,
+                        title: { display: true, text: '試行回数', font: { size: 10 } }
+                    } 
+                },
                 plugins: { legend: { display: false } },
                 animation: false
             }
@@ -241,19 +267,26 @@ if __name__ == '__main__':
         function updateUI() {
             document.getElementById('totalCount').innerText = total.toLocaleString();
             document.getElementById('insideCount').innerText = inside.toLocaleString();
+            
             if (total > 0) {
                 const piEstimate = (4 * inside) / total;
                 document.getElementById('piValue').innerText = piEstimate.toFixed(5);
                 const error = Math.abs((piEstimate - Math.PI) / Math.PI) * 100;
                 document.getElementById('errorValue').innerText = `誤差: ${error.toFixed(3)} %`;
-                if (total % 20 === 0 || total < 100) {
+                
+                // グラフデータの更新間隔（最初は細かく、後半は粗く）
+                let updateInterval = total < 500 ? 5 : 50;
+                
+                if (total % updateInterval === 0 || total < 50) {
                     historyData.push(piEstimate);
                     labels.push(total);
-                    chart.data.datasets[1].data.push(Math.PI);
-                    if (historyData.length > 100) {
+                    piLineData.push(Math.PI);
+                    
+                    // 表示件数を増やして初期の挙動を見やすくする (500件)
+                    if (historyData.length > 500) {
                         historyData.shift();
                         labels.shift();
-                        chart.data.datasets[1].data.shift();
+                        piLineData.shift();
                     }
                     chart.update();
                 }
@@ -305,13 +338,24 @@ if __name__ == '__main__':
         resetBtn.addEventListener('click', () => {
             isRunning = false;
             cancelAnimationFrame(animationId);
-            total = 0; inside = 0; historyData = []; labels = [];
-            chart.data.datasets[0].data = []; chart.data.datasets[1].data = [];
+            
+            // 変数をクリア
+            total = 0; 
+            inside = 0; 
+            
+            // 配列を空にする（参照を維持するため length = 0 を使用）
+            historyData.length = 0;
+            labels.length = 0;
+            piLineData.length = 0;
+            
             chart.update();
+            
             startBtn.innerText = 'スタート';
             startBtn.className = 'flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-md';
             document.getElementById('piValue').innerText = '0.00000';
             document.getElementById('errorValue').innerText = '誤差: -- %';
+            document.getElementById('statusBadge').innerText = '待機中';
+            
             initCanvas();
             updateUI();
         });
